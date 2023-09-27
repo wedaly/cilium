@@ -4,7 +4,10 @@
 package cmd
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
@@ -46,6 +49,9 @@ func (d *Daemon) startKubeProxyHealthzHTTPService(addr string) {
 		log.WithFields(addrField).WithError(err).Fatal("hint: kube-proxy should not be running nor listening on the same healthz-bind-address.")
 	}
 
+	// Hack: wrap the listener to handle PLS PROXY protocol.
+	plsLn := &plsCompatibleListener{ln}
+
 	mux := http.NewServeMux()
 	mux.Handle("/healthz", kubeproxyHealthzHandler{d: d, svc: d.svc})
 
@@ -55,7 +61,7 @@ func (d *Daemon) startKubeProxyHealthzHTTPService(addr string) {
 	}
 
 	go func() {
-		err := srv.Serve(ln)
+		err := srv.Serve(plsLn)
 		if errors.Is(err, http.ErrServerClosed) {
 			log.WithFields(addrField).Info("kube-proxy healthz status API server shutdown")
 		} else if err != nil {
@@ -88,4 +94,46 @@ func (h kubeproxyHealthzHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(statusCode)
 	fmt.Fprintf(w, `{"lastUpdated": %q,"currentTime": %q}`, lastUpdateTs, currentTs)
+}
+
+/* Everything below this line is a hack! */
+const PROXY_PROTOCOL_HDR_LEN = 16
+
+var PROXY_PROTOCOL_SIGNATURE = [...]byte{0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A}
+
+type plsCompatibleListener struct {
+	ln net.Listener
+}
+
+func (l *plsCompatibleListener) Accept() (net.Conn, error) {
+	conn, err := l.ln.Accept()
+	if err != nil {
+		return conn, err
+	}
+
+	r := bufio.NewReader(conn)
+
+	// PROXY protocol header is 16 bytes, the first 12 of which are the signature.
+	// https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
+	maybeProxyHdr, err := r.Peek(PROXY_PROTOCOL_HDR_LEN)
+	if err == nil && len(maybeProxyHdr) == PROXY_PROTOCOL_HDR_LEN && bytes.Equal(maybeProxyHdr[0:12], PROXY_PROTOCOL_SIGNATURE[:]) {
+		proxyHdr := maybeProxyHdr
+		// Last 2 bytes of the header are the length in network endian order.
+		proxyLen := binary.BigEndian.Uint16(proxyHdr[14:16])
+		// Discard PROXY protocol (16 byte header + proxyLen).
+		_, err := r.Discard(PROXY_PROTOCOL_HDR_LEN + int(proxyLen))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return conn, nil
+}
+
+func (l *plsCompatibleListener) Close() error {
+	return l.ln.Close()
+}
+
+func (l *plsCompatibleListener) Addr() net.Addr {
+	return l.ln.Addr()
 }
