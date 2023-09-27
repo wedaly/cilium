@@ -117,14 +117,20 @@ func (l *plsCompatibleListener) Accept() (net.Conn, error) {
 	// https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
 	maybeProxyHdr, err := r.Peek(PROXY_PROTOCOL_HDR_LEN)
 	if err == nil && len(maybeProxyHdr) == PROXY_PROTOCOL_HDR_LEN && bytes.Equal(maybeProxyHdr[0:12], PROXY_PROTOCOL_SIGNATURE[:]) {
+		// DEBUG to confirm we hit this branch
+		log.Info("PROXY protocol detected")
+
 		proxyHdr := maybeProxyHdr
 		// Last 2 bytes of the header are the length in network endian order.
 		proxyLen := binary.BigEndian.Uint16(proxyHdr[14:16])
 		// Discard PROXY protocol (16 byte header + proxyLen).
-		_, err := r.Discard(PROXY_PROTOCOL_HDR_LEN + int(proxyLen))
+		n, err := r.Discard(PROXY_PROTOCOL_HDR_LEN + int(proxyLen))
 		if err != nil {
 			return nil, err
 		}
+
+		// DEBUG logging to confirm we successfully discarded bytes.
+		log.Infof("Discarded %d bytes for PROXY protocol", n)
 	}
 
 	return conn, nil
