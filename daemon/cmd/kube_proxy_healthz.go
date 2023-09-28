@@ -111,6 +111,23 @@ func (l *plsCompatibleListener) Accept() (net.Conn, error) {
 		return conn, err
 	}
 
+	return newPlsCompatibleConn(conn)
+}
+
+func (l *plsCompatibleListener) Close() error {
+	return l.ln.Close()
+}
+
+func (l *plsCompatibleListener) Addr() net.Addr {
+	return l.ln.Addr()
+}
+
+type plsCompatibleConn struct {
+	conn net.Conn
+	r    *bufio.Reader
+}
+
+func newPlsCompatibleConn(conn net.Conn) (*plsCompatibleConn, error) {
 	r := bufio.NewReader(conn)
 
 	// PROXY protocol header is 16 bytes, the first 12 of which are the signature.
@@ -133,13 +150,37 @@ func (l *plsCompatibleListener) Accept() (net.Conn, error) {
 		log.Infof("Discarded %d bytes for PROXY protocol", n)
 	}
 
-	return conn, nil
+	return &plsCompatibleConn{conn, r}, nil
 }
 
-func (l *plsCompatibleListener) Close() error {
-	return l.ln.Close()
+func (c *plsCompatibleConn) Read(b []byte) (n int, err error) {
+	return c.r.Read(b)
 }
 
-func (l *plsCompatibleListener) Addr() net.Addr {
-	return l.ln.Addr()
+func (c *plsCompatibleConn) Write(b []byte) (n int, err error) {
+	return c.conn.Write(b)
+}
+
+func (c *plsCompatibleConn) Close() error {
+	return c.conn.Close()
+}
+
+func (c *plsCompatibleConn) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+
+func (c *plsCompatibleConn) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+
+func (c *plsCompatibleConn) SetDeadline(t time.Time) error {
+	return c.conn.SetDeadline(t)
+}
+
+func (c *plsCompatibleConn) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+
+func (c *plsCompatibleConn) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
 }
