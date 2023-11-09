@@ -4,8 +4,21 @@ operator:
   nodeSelector:
     kubernetes.io/os: linux
     kubernetes.io/hostname: kind-worker
+routingMode: "native"
+tunnel: "disabled"
+enableIPv4Masquerade: false
+enableIPv6Masquerade: false
 ipam:
-  mode: kubernetes
+  mode: delegated-plugin
+endpointHealthChecking:
+  enabled: false
+endpointRoutes:
+  enabled: true
+extraArgs:
+  - "--local-router-ipv4=169.254.23.0"
+  - "--local-router-ipv6=fe80::"
+cni:
+  customConf: true
 ipv6:
   enabled: true
 ipv4:
