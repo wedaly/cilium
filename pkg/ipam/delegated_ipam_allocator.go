@@ -6,6 +6,7 @@ package ipam
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 
 	"github.com/google/uuid"
@@ -18,7 +19,17 @@ import (
 // usual container runtime -> CNI -> IPAM plugin flow.
 // In those cases, cilium-agent uses delegatedIPAMAllocator to invoke the delegated IPAM
 // plugin directly.
-type delegatedIPAMAllocator struct{}
+type delegatedIPAMAllocator struct {
+	store  *delegatedIPAMStore
+	family Family
+}
+
+func newDelegatedIPAMAllocator(store *delegatedIPAMStore, family Family) *delegatedIPAMAllocator {
+	return &delegatedIPAMAllocator{
+		store:  store,
+		family: family,
+	}
+}
 
 func (d *delegatedIPAMAllocator) Allocate(ip net.IP, owner string, pool Pool) (*AllocationResult, error) {
 	// No difference between Allocate and AllocateWithoutSyncUpstream.
@@ -70,8 +81,9 @@ func (d *delegatedIPAMAllocator) RestoreFinished() {
 // TODO: for the prototype, keep this in-memory, but in a real implementation
 // we'd need to persist to disk to avoid leaking IPs on cilium-agent restart.
 type delegatedIPAMStore struct {
-	mu       sync.Mutex
-	entryMap map[delegatedIPAMKey]*delegatedIPAMEntry
+	mu           sync.Mutex
+	entryMap     map[delegatedIPAMKey]*delegatedIPAMEntry
+	availableIPs map[netip.Addr]struct{}
 }
 
 type delegatedIPAMKey struct {
@@ -80,13 +92,14 @@ type delegatedIPAMKey struct {
 }
 
 type delegatedIPAMEntry struct {
-	ipv4 net.IP
-	ipv6 net.IP
+	ipv4 netip.Addr
+	ipv6 netip.Addr
 }
 
 func newDelegatedIPAMStore() *delegatedIPAMStore {
 	return &delegatedIPAMStore{
-		entryMap: make(map[delegatedIPAMKey]*delegatedIPAMEntry),
+		entryMap:     make(map[delegatedIPAMKey]*delegatedIPAMEntry),
+		availableIPs: make(map[netip.Addr]struct{}, 3),
 	}
 }
 
@@ -103,7 +116,7 @@ func (s *delegatedIPAMStore) startAllocation() (delegatedIPAMKey, error) {
 	return key, nil
 }
 
-func (s *delegatedIPAMStore) completeAllocation(key delegatedIPAMKey, ipv4 net.IP, ipv6 net.IP) error {
+func (s *delegatedIPAMStore) completeAllocation(key delegatedIPAMKey, ipv4 netip.Addr, ipv6 netip.Addr) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -117,15 +130,18 @@ func (s *delegatedIPAMStore) completeAllocation(key delegatedIPAMKey, ipv4 net.I
 		ipv6: ipv6,
 	}
 
+	s.availableIPs[ipv4] = struct{}{}
+	s.availableIPs[ipv4] = struct{}{}
+
 	return nil
 }
 
-func (s *delegatedIPAMStore) lookupIP(ip net.IP) (*delegatedIPAMKey, error) {
+func (s *delegatedIPAMStore) lookupIP(ip netip.Addr) (*delegatedIPAMKey, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for key, entry := range s.entryMap {
-		if entry.ipv4.Equal(ip) || entry.ipv6.Equal(ip) {
+		if entry.ipv4.Compare(ip) == 0 || entry.ipv6.Compare(ip) == 0 {
 			return &key, nil
 		}
 	}
@@ -137,6 +153,26 @@ func (s *delegatedIPAMStore) deleteAllocation(key delegatedIPAMKey) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	entry, ok := s.entryMap[key]
+	if ok {
+		delete(s.availableIPs, entry.ipv4)
+		delete(s.availableIPs, entry.ipv6)
+	}
+
 	delete(s.entryMap, key)
 	return nil
+}
+
+func (s *delegatedIPAMStore) assignNextIPFromFamily(family Family) (netip.Addr, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for ip := range s.availableIPs {
+		if DeriveFamily(ip.AsSlice()) == family {
+			delete(s.availableIPs, ip)
+			return ip, nil
+		}
+	}
+
+	return netip.Addr{}, fmt.Errorf("no IP available for family %s", family)
 }

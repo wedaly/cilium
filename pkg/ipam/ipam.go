@@ -143,11 +143,12 @@ func NewIPAM(nodeAddressing types.NodeAddressing, c Configuration, owner Owner, 
 		}
 	case ipamOption.IPAMDelegatedPlugin:
 		log.Info("Initializing delegated IPAM plugin")
+		store := newDelegatedIPAMStore()
 		if c.IPv6Enabled() {
-			ipam.IPv6Allocator = &delegatedIPAMAllocator{}
+			ipam.IPv6Allocator = newDelegatedIPAMAllocator(store, IPv6)
 		}
 		if c.IPv4Enabled() {
-			ipam.IPv4Allocator = &delegatedIPAMAllocator{}
+			ipam.IPv4Allocator = newDelegatedIPAMAllocator(store, IPv4)
 		}
 	default:
 		log.Fatalf("Unknown IPAM backend %s", c.IPAMMode())
