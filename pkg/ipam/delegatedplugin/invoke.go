@@ -8,6 +8,7 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	cniInvoke "github.com/containernetworking/cni/pkg/invoke"
 	cniTypesV1 "github.com/containernetworking/cni/pkg/types/100"
+	cniVersion "github.com/containernetworking/cni/pkg/version"
 )
 
 // Implements cniInvoke.CNIArgs interface.
@@ -46,6 +47,11 @@ func NewInvoker(cniConflistDir string, cniConflistName string, cniBinaryPaths []
 	netConfList, err := libcni.LoadConfList(cniConflistDir, cniConflistName)
 	if err != nil {
 		return nil, fmt.Errorf("Error loading CNI conflist from dir %q with name %q: %w", cniConflistDir, cniConflistName, err)
+	}
+
+	// We're relying on CNI CHECK being available, so need at least CNI 0.4.0
+	if gtet, err := cniVersion.GreaterThanOrEqualTo(netConfList.CNIVersion, "0.4.0"); err != nil || !gtet {
+		return nil, fmt.Errorf("CNI config version does not allow CHECK (need >= 0.4.0)")
 	}
 
 	// Better find Cilium in the conflist.
