@@ -630,6 +630,8 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 		return nil
 	}
 
+	log.Infof("allocateIPFromDelegatedPlugin: start for ipKey %s", ipKey)
+
 	// Silly to have a new invoker each time, but whatever.
 	// TODO: paths should come from config, not hardcoded.
 	cniPath := "/etc/cni/net.d/"
@@ -646,6 +648,8 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 	// Step 1: Check if an IP was allocated previously. If so, we're done.
 	prevIP := getIP()
 	if prevIP != nil {
+		log.Infof("allocateIPFromDelegatedPlugin: found IP %s for ipKey %s", prevIP, ipKey)
+
 		// CNI CHECK to confirm an IP is still allocated.
 		// We can't check if it's the *same* IP, so we're assuming no one has called the IPAM plugin
 		// to release and reallocate an IP with the same containerId.
@@ -656,10 +660,13 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 		} else {
 			log.Infof("CNI CHECK returned error %w checking IP with key %s, will allocate a new one", err, ipKey)
 		}
+
+		log.Infof("allocateIPFromDelegatedPlugin: CNI CHECK succeeded for ipKey %s", ipKey)
 	}
 
 	// Step 2: CNI DEL the container ID associated with this IP.
 	// This ensures that we don't leak IPs if cilium-agent restarts before writing the IP to CiliumNode.
+	log.Infof("allocateIPFromDelegatedPlugin: CNI DEL for ipKey %s", ipKey)
 	err = invoker.DelegateDelete(ctx, pseudoContainerId)
 	if err != nil {
 		log.Errorf("CNI DEL returned error %w for IP with key %s", err, ipKey)
@@ -668,6 +675,7 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 	}
 
 	// Step 3: CNI ADD the container ID associated with this IP.
+	log.Infof("allocateIPFromDelegatedPlugin: CNI ADD for ipKey %s", ipKey)
 	ipamResult, err := invoker.DelegateAdd(ctx, pseudoContainerId)
 	if err != nil {
 		log.Errorf("CNI ADD for IP key %s returned error %w", ipKey, err)
