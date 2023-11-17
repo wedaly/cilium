@@ -716,7 +716,7 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 			setIP(ipv4)
 			return nil
 		}
-		// TODO: how to handle ipv6 here too?
+		// TODO: handle ipv6 here too. Maybe need get/set functions for both IP families.
 	}
 
 	// Didn't find an IP, return an error.
