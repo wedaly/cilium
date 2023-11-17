@@ -341,6 +341,13 @@ spec:
           mountPath: {{ .Values.cni.confFileMountPath }}
           readOnly: true
         {{- end }}
+        # HACK: mount the cni volumes for delegated IPAM config and plugin
+        - name: etc-cni-netd
+          mountPath: "/etc/cni/net.d"
+          readOnly: true
+        - name: cni-path
+          mountPath: "/opt/cni/bin"
+          readOnly: true
           # Needed to be able to load kernel modules
         - name: lib-modules
           mountPath: /lib/modules
