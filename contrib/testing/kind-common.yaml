@@ -13,7 +13,7 @@ ipam:
 extraHostPathMounts:
   - name: host-local-ipam-data
     hostPath: /var/lib/cni/networks
-    hostPathType: Directory
+    hostPathType: DirectoryOrCreate
     mountPath: /var/lib/cni/networks
     readOnly: false
 endpointHealthChecking:
