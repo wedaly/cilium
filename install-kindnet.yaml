@@ -96,7 +96,6 @@ spec:
                    "log-file": "/var/log/cilium-cni.log",
                    "ipam": {
                      "type": "host-local",
-                     "dataDir": "/run/cni-ipam-state",
                      "routes": [
                        {{$first := true}}
                        {{- range $route := .DefaultRoutes}}
