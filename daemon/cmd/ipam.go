@@ -654,7 +654,8 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 	// This is the hack, use the containerId to identify the IP.
 	pseudoContainerId := ipKey
 
-	// Step 1: Check if an IP was allocated previously. If so, we're done.
+	// Step 1: If there's an IP we want to restore, CNI CHECK that it's still allocated.
+	// If it is, then we're done.
 	prevIP := getIP()
 	if prevIP != nil {
 		log.Infof("allocateIPFromDelegatedPlugin: found IP %s for ipKey %s", prevIP, ipKey)
@@ -673,7 +674,9 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 	}
 
 	// Step 2: CNI DEL the container ID associated with this IP.
-	// This ensures that we don't leak IPs if cilium-agent restarts before writing the IP to CiliumNode.
+	// We do this every time to ensures that we don't leak IPs, even if cilium-agent crashes
+	// before storing the IP somewhere. For the health IP, cilium doesn't restore the IP at all,
+	// so releasing here ensures that we allocate at most one health IP per family.
 	log.Infof("allocateIPFromDelegatedPlugin: CNI DEL for ipKey %s", ipKey)
 	err = invoker.DelegateDelete(ctx, pseudoContainerId)
 	if err != nil {
@@ -690,7 +693,7 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 		return fmt.Errorf("CNI ADD for IP key %s: %w", ipKey, err)
 	}
 
-	// Step 4: Write the IP to CiliumNode.
+	// Step 4: Set the IP.
 	for _, ipConfig := range ipamResult.IPs {
 		ipNet := ipConfig.Address
 		if ipv4 := ipNet.IP.To4(); ipv4 != nil {
