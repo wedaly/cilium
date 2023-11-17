@@ -632,9 +632,10 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 
 	// Silly to have a new invoker each time, but whatever.
 	// TODO: paths should come from config, not hardcoded.
-	cniPath := "/etc/cni/net.d/05-cilium-kindnet.conflist"
+	cniPath := "/etc/cni/net.d/"
+	cniName := "cilium"
 	cniBinaryPaths := []string{"/opt/cni/bin"}
-	invoker, err := delegatedplugin.NewInvoker(cniPath, cniBinaryPaths)
+	invoker, err := delegatedplugin.NewInvoker(cniPath, cniName, cniBinaryPaths)
 	if err != nil {
 		return err
 	}

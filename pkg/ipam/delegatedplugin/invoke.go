@@ -3,7 +3,6 @@ package delegatedplugin
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/containernetworking/cni/libcni"
@@ -37,16 +36,16 @@ func (a *cniArgs) AsEnv() []string {
 // This is used only for cilium-agent to allocate IPs for itself.
 // TODO: this should probably be an interface so we can mock it in tests.
 type Invoker struct {
+	cniConflistDir string
 	cniBinaryPaths []string // Equivalent of CNI_PATH env var in CNI plugin
 	netConf        *libcni.NetworkConfig
 }
 
-func NewInvoker(cniConflistPath string, cniBinaryPaths []string) (*Invoker, error) {
+func NewInvoker(cniConflistDir string, cniConflistName string, cniBinaryPaths []string) (*Invoker, error) {
 	// TODO: add retries or watcher in case conflist doesn't yet exist.
-	dir, name := path.Split(cniConflistPath)
-	netConfList, err := libcni.LoadConfList(dir, name)
+	netConfList, err := libcni.LoadConfList(cniConflistDir, cniConflistName)
 	if err != nil {
-		return nil, fmt.Errorf("Error loading CNI conflist from %q: %w", cniConflistPath, err)
+		return nil, fmt.Errorf("Error loading CNI conflist from dir %q with name %q: %w", cniConflistDir, cniConflistName, err)
 	}
 
 	// Better find Cilium in the conflist.
@@ -59,7 +58,7 @@ func NewInvoker(cniConflistPath string, cniBinaryPaths []string) (*Invoker, erro
 	}
 
 	if netConf == nil {
-		return nil, fmt.Errorf("Could not find Cilium plugin in CNI conflist %s", cniConflistPath)
+		return nil, fmt.Errorf("Could not find Cilium plugin in CNI conflist")
 	} else if netConf.Network.IPAM.Type == "" {
 		return nil, fmt.Errorf("Cilium CNI config does not have specify delegated IPAM plugin")
 	}
