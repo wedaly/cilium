@@ -70,6 +70,13 @@ func NewInvoker(cniConflistPath string, cniBinaryPaths []string) (*Invoker, erro
 		return nil, fmt.Errorf("Cilium CNI config does not have specify delegated IPAM plugin")
 	}
 
+	// Need to copy some values from the conflist to the runtime config.
+	// https://www.cni.dev/docs/spec/#deriving-runtimeconfig
+	// We're doing the bare minimum here to get this working.
+	netConf.CNIVersion = netConfList.CNIVersion
+	netConf.Name = netConfList.Name
+	netConf.Capabilities = nil
+
 	invoker := &Invoker{
 		cniBinaryPaths: cniBinaryPaths,
 		netConf:        netConf,
