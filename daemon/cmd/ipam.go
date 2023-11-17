@@ -665,12 +665,11 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 		err := invoker.DelegateCheck(ctx, pseudoContainerId)
 		if err == nil {
 			// Check succeeded, so we're done.
+			log.Infof("allocateIPFromDelegatedPlugin: CNI CHECK succeeded for ipKey %s", ipKey)
 			return nil
 		} else {
 			log.Infof("CNI CHECK returned error %w checking IP with key %s, will allocate a new one", err, ipKey)
 		}
-
-		log.Infof("allocateIPFromDelegatedPlugin: CNI CHECK succeeded for ipKey %s", ipKey)
 	}
 
 	// Step 2: CNI DEL the container ID associated with this IP.
