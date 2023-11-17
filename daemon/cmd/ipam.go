@@ -22,6 +22,7 @@ import (
 	"github.com/cilium/cilium/pkg/defaults"
 	iputil "github.com/cilium/cilium/pkg/ip"
 	"github.com/cilium/cilium/pkg/ipam"
+	"github.com/cilium/cilium/pkg/ipam/delegatedplugin"
 	ipamOption "github.com/cilium/cilium/pkg/ipam/option"
 	"github.com/cilium/cilium/pkg/logging/logfields"
 	"github.com/cilium/cilium/pkg/node"
@@ -300,6 +301,15 @@ func (d *Daemon) allocateDatapathIPs(family types.NodeAddressingFamily, fromK8s,
 func (d *Daemon) allocateHealthIPs() error {
 	bootstrapStats.healthCheck.Start()
 	if option.Config.EnableHealthChecking && option.Config.EnableEndpointHealthChecking {
+		if option.Config.IPAM == ipamOption.IPAMDelegatedPlugin {
+			return d.allocateIPFromDelegatedPlugin(
+				context.TODO(),
+				"cilium-agent-health",
+				node.GetEndpointHealthIPv4,
+				node.SetEndpointHealthIPv4,
+			)
+		}
+
 		if option.Config.EnableIPv4 {
 			result, err := d.ipam.AllocateNextFamilyWithoutSyncUpstream(ipam.IPv4, "health", ipam.PoolDefault())
 			if err != nil {
@@ -603,4 +613,77 @@ func parseRoutingInfo(result *ipam.AllocationResult) (*linuxrouting.RoutingInfo,
 		option.Config.IPAM,
 		option.Config.EnableIPv4Masquerade,
 	)
+}
+
+// allocateIPFromDelegatedPlugin allocates an IP for cilium-agent using a delegated IPAM CNI plugin.
+// https://www.cni.dev/docs/spec/#delegated-plugin-protocol
+// This function is used *only* for IPs that cilium-agent allocates for itself (e.g. router/health/ingress).
+// For pod IPs, Cilium CNI invokes the delegated plugin directly.
+// TODO: explain the args...
+func (d *Daemon) allocateIPFromDelegatedPlugin(
+	ctx context.Context,
+	ipKey string,
+	getIP func() net.IP,
+	setIP func(net.IP),
+) error {
+	if option.Config.IPAM != ipamOption.IPAMDelegatedPlugin {
+		return nil
+	}
+
+	// Silly to have a new invoker each time, but whatever.
+	// TODO: paths should come from config, not hardcoded.
+	cniPath := "/etc/cni/net.d/05-cilium-kindnet.conflist"
+	cniBinaryPaths := []string{"/opt/cni/bin"}
+	invoker, err := delegatedplugin.NewInvoker(cniPath, cniBinaryPaths)
+	if err != nil {
+		return err
+	}
+
+	// This is the hack, use the containerId to identify the IP.
+	pseudoContainerId := ipKey
+
+	// Step 1: Check if an IP was allocated previously. If so, we're done.
+	prevIP := getIP()
+	if prevIP != nil {
+		// CNI CHECK to confirm an IP is still allocated.
+		// We can't check if it's the *same* IP, so we're assuming no one has called the IPAM plugin
+		// to release and reallocate an IP with the same containerId.
+		err := invoker.DelegateCheck(ctx, pseudoContainerId)
+		if err == nil {
+			// Check succeeded, so we're done.
+			return nil
+		} else {
+			log.Infof("CNI CHECK returned error %w checking IP with key %s, will allocate a new one", err, ipKey)
+		}
+	}
+
+	// Step 2: CNI DEL the container ID associated with this IP.
+	// This ensures that we don't leak IPs if cilium-agent restarts before writing the IP to CiliumNode.
+	err = invoker.DelegateDelete(ctx, pseudoContainerId)
+	if err != nil {
+		log.Errorf("CNI DEL returned error %w for IP with key %s", err, ipKey)
+		// CNI spec doesn't say whether the plugin should return an error if the container ID doesn't exist,
+		// so we can't bail here. If we didn't delete successfully, then the CNI ADD below will likely fail anyway.
+	}
+
+	// Step 3: CNI ADD the container ID associated with this IP.
+	ipamResult, err := invoker.DelegateAdd(ctx, pseudoContainerId)
+	if err != nil {
+		log.Errorf("CNI ADD for IP key %s returned error %w", ipKey, err)
+		return fmt.Errorf("CNI ADD for IP key %s: %w", ipKey, err)
+	}
+
+	// Step 4: Write the IP to CiliumNode.
+	for _, ipConfig := range ipamResult.IPs {
+		ipNet := ipConfig.Address
+		if ipv4 := ipNet.IP.To4(); ipv4 != nil {
+			log.Infof("Delegated IPAM allocated IP %s for key %s", ipv4, ipKey)
+			setIP(ipv4)
+			return nil
+		}
+		// TODO: how to handle ipv6 here too?
+	}
+
+	// Didn't find an IP, return an error.
+	return fmt.Errorf("CNI ADD did not return an IPv4 address for IP key %s", ipKey)
 }
