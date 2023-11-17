@@ -3918,12 +3918,14 @@ func (c *DaemonConfig) checkIPAMDelegatedPlugin() error {
 		// Ingress controller and envoy config require cilium-agent to create an IP address
 		// specifically for differentiating ingress and envoy traffic, which is not possible
 		// with delegated IPAM.
+		/*
 		if c.EnableIngressController {
 			return fmt.Errorf("--%s must be disabled with --%s=%s", EnableIngressController, IPAM, ipamOption.IPAMDelegatedPlugin)
 		}
 		if c.EnableEnvoyConfig {
 			return fmt.Errorf("--%s must be disabled with --%s=%s", EnableEnvoyConfig, IPAM, ipamOption.IPAMDelegatedPlugin)
 		}
+		*/
 	}
 	return nil
 }
