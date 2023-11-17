@@ -628,7 +628,20 @@ func parseRoutingInfo(result *ipam.AllocationResult) (*linuxrouting.RoutingInfo,
 // https://www.cni.dev/docs/spec/#delegated-plugin-protocol
 // This function is used *only* for IPs that cilium-agent allocates for itself (e.g. router/health/ingress).
 // For pod IPs, Cilium CNI invokes the delegated plugin directly.
-// TODO: explain the args...
+//
+// There are a bunch of tricks and caveats with this approach:
+// 1) each kind of IP gets a containerId known in advance ("cilium-agent-health", "cilium-agent-ingerss", ...)
+//    This is how we avoid leaking IPs even if cilium crashes halfway.
+// 2) cilium-agent MUST mount every directory on the host that the CNI plugin expects to write to.
+//    Otherwise, the CNI plugin state would get lost when cilium-agent pod is deleted,
+//    (like /var/lib/cni/networks for host-local IPAM plugin).
+//    Need this otherwise IPs could leak, or the plugin could double-allocate IPs
+//    already allocated by the container runtime.
+//
+// The other thing I'm not sure about is whether this will break with the GC verb
+// introduced in CNI spec 1.1. If we allocate IPs here, the container runtime won't
+// know about them, so a GC might release them. Maybe Cilium CNI could inject
+// these into the delegated GC call, but that's bending the spec pretty far.
 func (d *Daemon) allocateIPFromDelegatedPlugin(
 	ctx context.Context,
 	ipKey string,
@@ -641,7 +654,7 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 
 	log.Infof("allocateIPFromDelegatedPlugin: start for ipKey %s", ipKey)
 
-	// Silly to have a new invoker each time, but whatever.
+	// TODO: silly to have a new invoker each time, should move it out to amortize cost of loading CNI conflist.
 	// TODO: paths should come from config, not hardcoded.
 	cniPath := "/etc/cni/net.d/"
 	cniName := "cilium"
@@ -663,6 +676,8 @@ func (d *Daemon) allocateIPFromDelegatedPlugin(
 		// CNI CHECK to confirm an IP is still allocated.
 		// We can't check if it's the *same* IP, so we're assuming no one has called the IPAM plugin
 		// to release and reallocate an IP with the same containerId.
+		// Assuming here that conforming CNI plugins implement CHECK correctly, even though
+		// azure-ipam currently just returns success without checking anything.
 		err := invoker.DelegateCheck(ctx, pseudoContainerId)
 		if err == nil {
 			// Check succeeded, so we're done.
