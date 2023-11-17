@@ -3910,9 +3910,11 @@ func (c *DaemonConfig) checkIPAMDelegatedPlugin() error {
 		if c.EnableIPv6 && c.LocalRouterIPv6 == "" {
 			return fmt.Errorf("--%s must be provided when IPv6 is enabled with --%s=%s", LocalRouterIPv6, IPAM, ipamOption.IPAMDelegatedPlugin)
 		}
+		/*
 		if c.EnableEndpointHealthChecking {
 			return fmt.Errorf("--%s must be disabled with --%s=%s", EnableEndpointHealthChecking, IPAM, ipamOption.IPAMDelegatedPlugin)
 		}
+		*/
 		// Ingress controller and envoy config require cilium-agent to create an IP address
 		// specifically for differentiating ingress and envoy traffic, which is not possible
 		// with delegated IPAM.
