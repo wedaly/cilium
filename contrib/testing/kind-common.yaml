@@ -18,6 +18,8 @@ extraHostPathMounts:
     readOnly: false
 endpointHealthChecking:
   enabled: true
+ingressController:
+  enabled: true
 endpointRoutes:
   enabled: true
 extraArgs:
