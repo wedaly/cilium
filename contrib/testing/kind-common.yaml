@@ -10,6 +10,12 @@ enableIPv4Masquerade: false
 enableIPv6Masquerade: false
 ipam:
   mode: delegated-plugin
+extraHostPathMounts:
+  - name: host-local-ipam-data
+    hostPath: /var/lib/cni/networks
+    hostPathType: Directory
+    mountPath: /var/lib/cni/networks
+    readOnly: false
 endpointHealthChecking:
   enabled: true
 endpointRoutes:
