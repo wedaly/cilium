@@ -367,6 +367,15 @@ func (d *Daemon) allocateHealthIPs() error {
 func (d *Daemon) allocateIngressIPs() error {
 	bootstrapStats.ingressIPAM.Start()
 	if option.Config.EnableEnvoyConfig {
+		if option.Config.IPAM == ipamOption.IPAMDelegatedPlugin {
+			return d.allocateIPFromDelegatedPlugin(
+				context.TODO(),
+				"cilium-agent-ingress",
+				node.GetIngressIPv4,
+				node.SetIngressIPv4,
+			)
+		}
+
 		if option.Config.EnableIPv4 {
 			var result *ipam.AllocationResult
 			var err error
