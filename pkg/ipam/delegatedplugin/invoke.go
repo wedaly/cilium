@@ -55,7 +55,7 @@ func NewInvoker(cniConflistPath string, cniBinaryPaths []string) (*Invoker, erro
 	// Better find Cilium in the conflist.
 	var netConf *cniTypes.NetConf
 	for _, plugin := range netConfList.Plugins {
-		if plugin.Name == "cilium" {
+		if plugin.Name == "cilium-cni" {
 			netConf = plugin
 			break
 		}
