@@ -11,7 +11,7 @@ enableIPv6Masquerade: false
 ipam:
   mode: delegated-plugin
 endpointHealthChecking:
-  enabled: false
+  enabled: true
 endpointRoutes:
   enabled: true
 extraArgs:
