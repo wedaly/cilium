@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	cniInvoke "github.com/containernetworking/cni/pkg/invoke"
 	cniTypes "github.com/containernetworking/cni/pkg/types"
@@ -17,6 +18,7 @@ type cniArgs struct {
 	ContainerID string
 	NetNS       string
 	IfName      string
+	CNIPath     string
 }
 
 // Unlike cniInvoke.Args, this does NOT expose all environment variables,
@@ -27,6 +29,7 @@ func (a *cniArgs) AsEnv() []string {
 		fmt.Sprintf("CNI_CONTAINERID=%s", a.ContainerID),
 		fmt.Sprintf("CNI_NETNS=%s", a.NetNS),
 		fmt.Sprintf("CNI_IFNAME=%s", a.IfName),
+		fmt.Sprintf("CNI_PATH=%s", a.CNIPath), // I think the spec says this isn't required, but reference implementation errors without it.
 	}
 }
 
@@ -81,6 +84,7 @@ func (in *Invoker) DelegateAdd(ctx context.Context, containerId string) (*cniTyp
 		ContainerID: containerId,
 		NetNS:       "host", // okay?
 		IfName:      "eth0", // sure?
+		CNIPath:     strings.Join(in.cniBinaryPaths, ":"),
 	}
 
 	pluginPath, err := cniInvoke.FindInPath(in.netConf.IPAM.Type, in.cniBinaryPaths)
@@ -111,6 +115,7 @@ func (in *Invoker) DelegateDelete(ctx context.Context, containerId string) error
 		Command:     "DEL",
 		ContainerID: containerId,
 		IfName:      "eth0", // sure?
+		CNIPath:     strings.Join(in.cniBinaryPaths, ":"),
 	}
 
 	pluginPath, err := cniInvoke.FindInPath(in.netConf.IPAM.Type, in.cniBinaryPaths)
@@ -132,6 +137,7 @@ func (in *Invoker) DelegateCheck(ctx context.Context, containerId string) error 
 		ContainerID: containerId,
 		NetNS:       "host", // okay?
 		IfName:      "eth0", // sure?
+		CNIPath:     strings.Join(in.cniBinaryPaths, ":"),
 	}
 
 	pluginPath, err := cniInvoke.FindInPath(in.netConf.IPAM.Type, in.cniBinaryPaths)
