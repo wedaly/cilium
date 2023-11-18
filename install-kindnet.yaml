@@ -1,3 +1,8 @@
+# This installs kindnetd, with an extra patch to allow overriding the conflist.
+# Easy way to get the reference host-local IPAM plugin installed as a delegated IPAM
+# plugin for cilium-cni.
+# The custom image of kindnetnd was built from:
+# https://github.com/aojea/kindnet/pull/22
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
