@@ -6,3 +6,7 @@ operator:
     override: "localhost:5000/cilium/operator-generic:local"
     pullPolicy: Never
     suffix: ""
+
+extraEnv:
+  - name: KUBE_FEATURE_WatchListClient
+    value: "true"
