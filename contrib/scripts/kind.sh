@@ -3,6 +3,7 @@
 # Source: https://kind.sigs.k8s.io/docs/user/local-registry/
 
 set -euo pipefail
+set -x
 
 usage() {
   echo "Usage: ${PROG} [--xdp] [--secondary-network] [--optimize-sysctl] [--external-dns ipv4-addr] [control-plane node count] [worker node count] [cluster-name] [node image] [kube-proxy mode] [ip-family] [apiserver-addr] [apiserver-port] [kubeconfig-path]"
@@ -236,6 +237,9 @@ kubeadmConfigPatches:
     apiServer:
       extraArgs:
         "v": "3"
+
+featureGates:
+  "WatchList": true
 EOF
 
 if [ "${secondary_network_flag}" = true ]; then
