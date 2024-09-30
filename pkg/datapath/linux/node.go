@@ -704,6 +704,9 @@ func (n *linuxNodeHandler) insertNeighborCommon(ctx context.Context, nextHop Nex
 	}
 	n.neighByNextHop[nextHop.Name] = &neigh
 
+	// DEBUG: simulate errors to validate memory usage.
+	errs = errors.Join(errs, fmt.Errorf("DEBUG widaly fake error to test memory usage"))
+
 	return errs
 }
 
