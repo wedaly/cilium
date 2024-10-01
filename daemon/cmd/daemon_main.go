@@ -1733,7 +1733,7 @@ func newDaemonPromise(params daemonParams) (promise.Promise[*Daemon], promise.Pr
 				}
 			}()
 
-			fmt.Printf("DEDBUG: newDaemon")
+			fmt.Printf("DEBUG: newDaemon\n")
 
 			d, restoredEndpoints, err := newDaemon(daemonCtx, cleaner, &params)
 			if err != nil {

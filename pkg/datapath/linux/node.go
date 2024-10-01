@@ -631,7 +631,7 @@ type NextHop struct {
 }
 
 func (n *linuxNodeHandler) insertNeighborCommon(ctx context.Context, nextHop NextHop, link netlink.Link, refresh bool) error {
-	fmt.Printf("DEBUG: insertNeighborCommon start")
+	fmt.Printf("DEBUG: insertNeighborCommon start\n")
 
 	if refresh {
 		if lastPing, found := n.neighLastPingByNextHop[nextHop.Name]; found &&
@@ -873,7 +873,7 @@ func (n *linuxNodeHandler) insertNeighbor6(ctx context.Context, newNode *nodeTyp
 // which tries to update neighbor entries previously inserted by insertNeighbor().
 // In this case the kernel refreshes the entry via NTF_USE.
 func (n *linuxNodeHandler) insertNeighbor(ctx context.Context, newNode *nodeTypes.Node, refresh bool) error {
-	fmt.Printf("DEBUG: insertNeighbor start")
+	fmt.Printf("DEBUG: insertNeighbor start\n")
 	var links []netlink.Link
 
 	n.neighLock.Lock()
@@ -961,6 +961,8 @@ func (n *linuxNodeHandler) DeleteMiscNeighbor(oldNode *nodeTypes.Node) {
 
 // Must be called with linuxNodeHandler.mutex held.
 func (n *linuxNodeHandler) nodeUpdate(oldNode, newNode *nodeTypes.Node, firstAddition bool) error {
+	fmt.Printf("DEBUG: linuxNodeHandler nodeUpdate\n")
+
 	var (
 		// Don't stop executing the function if we get an error. Instead we
 		// log and aggregate errors in accumulator.
@@ -995,6 +997,7 @@ func (n *linuxNodeHandler) nodeUpdate(oldNode, newNode *nodeTypes.Node, firstAdd
 		newKey = newNode.EncryptionKey
 	}
 
+	fmt.Printf("DEBUG: nodeUpdate before condition; enableNeighDiscovery=%t, isLocal=%t\n", n.enableNeighDiscovery, newNode.IsLocal())
 	if n.enableNeighDiscovery && !newNode.IsLocal() {
 		// If neighbor discovery is enabled, enqueue the request so we can monitor/report call health.
 		n.nodeNeighborQueue.Enqueue(newNode, false)

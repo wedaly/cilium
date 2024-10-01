@@ -177,6 +177,7 @@ type nodeQueueEntry struct {
 
 // Enqueue add a node to a controller managed queue which sets up the neighbor link.
 func (m *manager) Enqueue(n *nodeTypes.Node, refresh bool) {
+	fmt.Printf("DEBUG: nodeManager Enqueue\n")
 	if n == nil {
 		log.WithFields(logrus.Fields{
 			logfields.LogSubsys: "enqueue",
@@ -1105,14 +1106,14 @@ func (m *manager) GetNodes() map[nodeTypes.Identity]nodeTypes.Node {
 // that responsibility lies on the publishers.
 // This controller also provides for module health to be reported in a single central location.
 func (m *manager) StartNodeNeighborLinkUpdater(nh datapath.NodeNeighbors) {
-	fmt.Printf("DEBUG: StartNodeNeighborLinkUpdater")
+	fmt.Printf("DEBUG: StartNodeNeighborLinkUpdater\n")
 	sc := m.health.NewScope("neighbor-link-updater")
 	controller.NewManager().UpdateController(
 		"node-neighbor-link-updater",
 		controller.ControllerParams{
 			Group: neighborTableUpdateControllerGroup,
 			DoFunc: func(ctx context.Context) error {
-				fmt.Printf("DEBUG: StartNodeNeighborLinkUpdater DoFunc")
+				fmt.Printf("DEBUG: StartNodeNeighborLinkUpdater DoFunc\n")
 
 				var errs error
 				if m.nodeNeighborQueue.isEmpty() {
