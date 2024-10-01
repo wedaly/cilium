@@ -631,6 +631,8 @@ type NextHop struct {
 }
 
 func (n *linuxNodeHandler) insertNeighborCommon(ctx context.Context, nextHop NextHop, link netlink.Link, refresh bool) error {
+	fmt.Printf("DEBUG: insertNeighborCommon start")
+
 	if refresh {
 		if lastPing, found := n.neighLastPingByNextHop[nextHop.Name]; found &&
 			time.Since(lastPing) < option.Config.ARPPingRefreshPeriod {
@@ -871,6 +873,7 @@ func (n *linuxNodeHandler) insertNeighbor6(ctx context.Context, newNode *nodeTyp
 // which tries to update neighbor entries previously inserted by insertNeighbor().
 // In this case the kernel refreshes the entry via NTF_USE.
 func (n *linuxNodeHandler) insertNeighbor(ctx context.Context, newNode *nodeTypes.Node, refresh bool) error {
+	fmt.Printf("DEBUG: insertNeighbor start")
 	var links []netlink.Link
 
 	n.neighLock.Lock()

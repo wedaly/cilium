@@ -5,7 +5,7 @@
 set -euo pipefail
 
 default_controlplanes=1
-default_workers=1
+default_workers=3
 default_cluster_name="kind"
 default_image=""
 default_kubeproxy_mode="iptables"

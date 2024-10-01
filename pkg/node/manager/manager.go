@@ -1105,12 +1105,15 @@ func (m *manager) GetNodes() map[nodeTypes.Identity]nodeTypes.Node {
 // that responsibility lies on the publishers.
 // This controller also provides for module health to be reported in a single central location.
 func (m *manager) StartNodeNeighborLinkUpdater(nh datapath.NodeNeighbors) {
+	fmt.Printf("DEBUG: StartNodeNeighborLinkUpdater")
 	sc := m.health.NewScope("neighbor-link-updater")
 	controller.NewManager().UpdateController(
 		"node-neighbor-link-updater",
 		controller.ControllerParams{
 			Group: neighborTableUpdateControllerGroup,
 			DoFunc: func(ctx context.Context) error {
+				fmt.Printf("DEBUG: StartNodeNeighborLinkUpdater DoFunc")
+
 				var errs error
 				if m.nodeNeighborQueue.isEmpty() {
 					return nil
@@ -1124,6 +1127,7 @@ func (m *manager) StartNodeNeighborLinkUpdater(nh datapath.NodeNeighbors) {
 						break
 					}
 
+					fmt.Printf("DEBUG: refreshing node neighbor link for %s", e.node.Name)
 					log.Debugf("Refreshing node neighbor link for %s", e.node.Name)
 					hr := sc.NewScope(e.node.Name)
 					if errs = errors.Join(errs, nh.NodeNeighborRefresh(ctx, *e.node, e.refresh)); errs != nil {
