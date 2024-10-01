@@ -1216,12 +1216,15 @@ func (n *linuxNodeHandler) NodeConfigurationChanged(newConfig datapath.LocalNode
 		n.enableEncapsulation = func(*nodeTypes.Node) bool { return n.nodeConfig.EnableEncapsulation }
 	}
 
+	fmt.Printf("DEBUG: NodeConfigurationChanged start, n.nodeConfig.EnableIPv4=%t, EnableL2NeighDiscovery=%t\n", n.nodeConfig.EnableIPv4, option.Config.EnableL2NeighDiscovery)
 	if n.nodeConfig.EnableIPv4 || n.nodeConfig.EnableIPv6 {
 		var ifaceNames []string
 		switch {
 		case !option.Config.EnableL2NeighDiscovery:
+			fmt.Printf("DEBUG: NodeConfigurationChanged setting enableNeighDiscovery=false\n")
 			n.enableNeighDiscovery = false
 		case option.Config.DirectRoutingDeviceRequired():
+			fmt.Printf("DEBUG: NodeConfigurationChanged direct routing device required\n")
 			if option.Config.DirectRoutingDevice == "" {
 				return fmt.Errorf("direct routing device is required, but not defined")
 			}

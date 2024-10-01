@@ -2721,6 +2721,7 @@ func (c *DaemonConfig) validatePolicyCIDRMatchMode() error {
 // DirectRoutingDeviceRequired return whether the Direct Routing Device is needed under
 // the current configuration.
 func (c *DaemonConfig) DirectRoutingDeviceRequired() bool {
+	fmt.Printf("DEBUG: DirectRoutingDeviceRequired, c.EnableHostLegacyRouting=%t\n", c.EnableHostLegacyRouting)
 	// BPF NodePort and BPF Host Routing are using the direct routing device now.
 	// When tunneling is enabled, node-to-node redirection will be done by tunneling.
 	BPFHostRoutingEnabled := !c.EnableHostLegacyRouting
