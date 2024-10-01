@@ -1130,12 +1130,13 @@ func (m *manager) StartNodeNeighborLinkUpdater(nh datapath.NodeNeighbors) {
 
 					fmt.Printf("DEBUG: refreshing node neighbor link for %s", e.node.Name)
 					log.Debugf("Refreshing node neighbor link for %s", e.node.Name)
-					hr := sc.NewScope(e.node.Name)
-					if errs = errors.Join(errs, nh.NodeNeighborRefresh(ctx, *e.node, e.refresh)); errs != nil {
-						hr.Degraded("Failed node neighbor link update", errs)
-					} else {
-						hr.OK("Node neighbor link update successful")
-					}
+					errs = errors.Join(errs, nh.NodeNeighborRefresh(ctx, *e.node, e.refresh))
+				}
+
+				if errs != nil {
+					sc.Degraded("Failed node neighbor link update", errs)
+				} else {
+					sc.OK("Node neighbor link update successful")
 				}
 				return errs
 			},
