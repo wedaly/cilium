@@ -84,6 +84,9 @@ GO_TEST_FLAGS ?=
 GO_CLEAN_FLAGS ?=
 GO_BUILD_LDFLAGS ?=
 # go build/test -tags values
+# TODO: microsoft crypto, maybe easier to put goexperiment.systemcrypto in GO_TAGS_FLAGS
+# instead of setting GOEXPERIMENTS env var in the dockerfile?
+# See https://github.com/microsoft/go/tree/microsoft/main/eng/doc/fips#build-tagsw
 GO_TAGS_FLAGS += osusergo
 
 # This is declared here as it is needed to change the covermode depending on if
