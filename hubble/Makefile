@@ -1,7 +1,9 @@
 GO := go
 GO_BUILD_FLAGS =
 GO_TEST_FLAGS =
-GO_BUILD = CGO_ENABLED=0 $(GO) build $(GO_BUILD_FLAGS)
+# Microsoft crypto: need to build with CGO_ENABLED=1
+#GO_BUILD = CGO_ENABLED=0 $(GO) build $(GO_BUILD_FLAGS)
+GO_BUILD = $(GO) build $(GO_BUILD_FLAGS)
 SUBDIRS_HUBBLE_CLI := .
 TARGET=hubble
 VERSION=$(shell cat ../VERSION)
