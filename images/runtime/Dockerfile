@@ -52,7 +52,8 @@ COPY --from=bpftool-dist /usr/local /usr/local
 
 ARG TARGETPLATFORM
 COPY --from=gops-cni-builder /out/${TARGETPLATFORM}/bin/loopback /cni/loopback
-COPY --from=gops-cni-builder /out/${TARGETPLATFORM}/bin/gops /bin/gops
+# Microsoft crypto: skip gops
+#COPY --from=gops-cni-builder /out/${TARGETPLATFORM}/bin/gops /bin/gops
 
 FROM ${TESTER_IMAGE} AS test
 COPY --from=rootfs / /
