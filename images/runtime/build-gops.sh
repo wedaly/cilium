@@ -25,7 +25,7 @@ for arch in amd64 arm64 ; do
   mkdir -p "/out/linux/${arch}/bin"
   #GOARCH="${arch}" CGO_ENABLED=0 go build -ldflags "-s -w" -o "/out/linux/${arch}/bin/gops" github.com/google/gops
   # Microsoft compliant crypto requires CGO_ENABLED=1 so it can link with OpenSSL
-  GOARCH="${arch}" go build -ldflags "-s -w" -o "/out/linux/${arch}/bin/gops" github.com/google/gops
+  GOARCH="${arch}" CGO_ENABLED=1 go build -ldflags "-s -w" -o "/out/linux/${arch}/bin/gops" github.com/google/gops
 done
 
 x86_64-linux-gnu-strip /out/linux/amd64/bin/gops
