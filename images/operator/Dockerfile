@@ -1,7 +1,9 @@
 # Copyright Authors of Cilium
 # SPDX-License-Identifier: Apache-2.0
 
-ARG BASE_IMAGE=scratch
+# Microsoft crypto: use Ubuntu base image so necessary OpenSSL libraries are available
+#ARG BASE_IMAGE=scratch
+ARG BASE_IMAGE=mcr.microsoft.com/mirror/docker/library/ubuntu:22.04@sha256:58b87898e82351c6cf9cf5b9f3c20257bb9e2dcf33af051e12ce532d7f94e3fe
 ARG GOLANG_IMAGE=mcr.microsoft.com/oss/go/microsoft/golang:1.22-fips-cbl-mariner2.0@sha256:393ffb8a69701c2fd491d3a97ec62cd2d29dbd69bb434cafeb788acce69eb698
 ARG ALPINE_IMAGE=docker.io/library/alpine:3.20.1@sha256:b89d9c93e9ed3597455c90a0b88a8bbb5cb7188438f70953fede212a0c4394e0
 ARG CILIUM_BUILDER_IMAGE=cilium/cilium-builder:v1.16.3-widaly-ms-crypto-experiment
