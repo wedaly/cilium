@@ -179,6 +179,9 @@ else
     GOTEST_COVER_OPTS += -covermode=count
 endif
 
+# Microsoft crypto: must build with CGO everywhere
+GO_BUILD = $(GO_BUILD_WITH_CGO)
+
 ifneq ($(LOCKDEBUG),)
     GO_TAGS_FLAGS += lockdebug
 endif
