@@ -29,6 +29,10 @@ ARG TARGETARCH
 # MODIFIERS are extra arguments to be passed to make at build time.
 ARG MODIFIERS
 
+# Microsoft compliant crypto
+ENV GOTOOLCHAIN=local
+ENV GOEXPERIMENT=systemcrypto
+
 #
 # Please do not add any dependency updates before the 'make install' here,
 # as that will mess with caching for incremental builds!

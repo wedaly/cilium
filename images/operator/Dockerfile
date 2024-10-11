@@ -20,6 +20,10 @@ ARG OPERATOR_VARIANT
 # MODIFIERS are extra arguments to be passed to make at build time.
 ARG MODIFIERS
 
+# Microsoft compliant crypto
+ENV GOTOOLCHAIN=local
+ENV GOEXPERIMENT=systemcrypto
+
 WORKDIR /go/src/github.com/cilium/cilium
 
 RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium \

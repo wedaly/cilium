@@ -27,6 +27,10 @@ ARG TARGETARCH
 # MODIFIERS are extra arguments to be passed to make at build time.
 ARG MODIFIERS
 
+# Microsoft compliant crypto
+ENV GOTOOLCHAIN=local
+ENV GOEXPERIMENT=systemcrypto
+
 WORKDIR /go/src/github.com/cilium/cilium/clustermesh-apiserver
 RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium \
     mkdir -p /out/${TARGETOS}/${TARGETARCH} && cp etcd-config.yaml /out/${TARGETOS}/${TARGETARCH}/etcd-config.yaml
