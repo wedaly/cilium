@@ -44,8 +44,8 @@ RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium \
 # BUILDPLATFORM is an automatic platform ARG enabled by Docker BuildKit.
 # Represents the plataform where the build is happening, do not mix with
 # TARGETARCH
-FROM --platform=${BUILDPLATFORM} ${ALPINE_IMAGE} AS certs
-RUN apk --update add ca-certificates
+#FROM --platform=${BUILDPLATFORM} ${ALPINE_IMAGE} AS certs
+#RUN apk --update add ca-certificates
 
 # BUILDPLATFORM is an automatic platform ARG enabled by Docker BuildKit.
 # Represents the plataform where the build is happening, do not mix with
@@ -68,7 +68,7 @@ ARG TARGETOS
 ARG TARGETARCH
 ARG OPERATOR_VARIANT
 LABEL maintainer="maintainer@cilium.io"
-COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 #COPY --from=gops /out/${TARGETOS}/${TARGETARCH}/bin/gops /bin/gops
 COPY --from=builder /out/${TARGETOS}/${TARGETARCH}/usr/bin/cilium-${OPERATOR_VARIANT} /usr/bin/cilium-${OPERATOR_VARIANT}
 COPY --from=builder /out/${TARGETOS}/${TARGETARCH}/LICENSE.all /LICENSE.all
