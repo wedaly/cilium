@@ -57,17 +57,23 @@ ENV GOROOT /usr/local/go
 ENV GOPATH /go
 ENV PATH "${GOROOT}/bin:${GOPATH}/bin:${PATH}"
 
-RUN CGO_ENABLED=0 go install github.com/go-delve/delve/cmd/dlv@latest
+# Microsoft compliant crypto
+ENV GOTOOLCHAIN=local
+ENV GOEXPERIMENT=systemcrypto
+
+# Microsoft crypto: skip dlv
+#RUN CGO_ENABLED=0 go install github.com/go-delve/delve/cmd/dlv@latest
 
 WORKDIR /go/src/github.com/cilium/cilium/images/builder
 RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium/images/builder \
     ./install-gitconfig.sh
 
-WORKDIR /go/src/github.com/cilium/cilium/images/builder
-RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium/images/builder \
-    --mount=type=cache,target=/root/.cache \
-    --mount=type=cache,target=/go/pkg \
-    ./build-debug-wrapper.sh
+# Microsoft crypto: skip debug-wrapper
+#WORKDIR /go/src/github.com/cilium/cilium/images/builder
+#RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium/images/builder \
+#    --mount=type=cache,target=/root/.cache \
+#    --mount=type=cache,target=/go/pkg \
+#    ./build-debug-wrapper.sh
 
 WORKDIR /go/src/github.com/cilium/cilium/images/builder
 RUN --mount=type=bind,readwrite,target=/go/src/github.com/cilium/cilium/images/builder \
