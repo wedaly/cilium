@@ -16,7 +16,6 @@ FROM ${CILIUM_IPTABLES_IMAGE} AS iptables-dist
 FROM --platform=${BUILDPLATFORM} ${GOLANG_IMAGE} AS gops-cni-builder
 
 #RUN apt-get update && apt-get install -y binutils-aarch64-linux-gnu binutils-x86-64-linux-gnu
-RUN tdnf update && tdnf install -y binutils-aarch64-linux-gnu
 
 # build-gops.sh will build both archs at the same time
 WORKDIR /go/src/github.com/cilium/cilium/images/runtime

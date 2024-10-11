@@ -19,5 +19,6 @@ for arch in amd64 arm64 ; do
   tar -C "/out/linux/${arch}/bin" -xf "/tmp/cni-${arch}.tgz" ./loopback
 done
 
-x86_64-linux-gnu-strip /out/linux/amd64/bin/loopback
-aarch64-linux-gnu-strip /out/linux/arm64/bin/loopback
+# Microsoft crypto: Mariner image doesn't have these strip tools, so skip.
+#x86_64-linux-gnu-strip /out/linux/amd64/bin/loopback
+#aarch64-linux-gnu-strip /out/linux/arm64/bin/loopback
