@@ -37,7 +37,7 @@ cat <<EOF > kind-config-delegated-ipam.yaml
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
-- role: control-plane
+  - role: control-plane
     # Disable kube-controller-manager allocate-node-cidrs to avoid mismatch between
     # the node podCIDR assigned by KCM and the CIDR configured for the host-local IPAM plugin.
     kubeadmConfigPatches:
@@ -49,26 +49,26 @@ nodes:
             allocate-node-cidrs: "false"
     extraMounts:
     - hostPath: kind-control-plane-delegated-ipam.conflist
-        containerPath: /etc/cni/net.d/05-cilium.conflist
+      containerPath: /etc/cni/net.d/05-cilium.conflist
 
-- role: worker
+  - role: worker
     extraMounts:
     - hostPath: kind-worker-delegated-ipam.conflist
-        containerPath: /etc/cni/net.d/05-cilium.conflist
+      containerPath: /etc/cni/net.d/05-cilium.conflist
 
-- role: worker
+  - role: worker
     extraMounts:
     - hostPath: kind-worker2-delegated-ipam.conflist
-        containerPath: /etc/cni/net.d/05-cilium.conflist
+      containerPath: /etc/cni/net.d/05-cilium.conflist
 
 networking:
-disableDefaultCNI: true
-ipFamily: "$ipFamily"
-podSubnet: "$podSubnet"
-serviceSubnet: "$serviceSubnet"
+  disableDefaultCNI: true
+  ipFamily: "$ipFamily"
+  podSubnet: "$podSubnet"
+  serviceSubnet: "$serviceSubnet"
 EOF
 
-kind create cluster --config kind-config-delegated-ipam.yaml --wait
+kind create cluster --config kind-config-delegated-ipam.yaml --wait 10m
 
 addPodCIDRRoutesToNode() {
 node=$1
