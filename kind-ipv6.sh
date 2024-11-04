@@ -71,12 +71,11 @@ EOF
 kind create cluster --config kind-config-delegated-ipam.yaml --wait 10m
 
 addPodCIDRRoutesToNode() {
-node=$1
-ipv6Subnet=$2
-nodeIPv6=$(kubectl get node $node -o json | jq -r '.status.addresses[] | select(.type=="InternalIP") | .address' | tail -n 1)
-echo "adding route from $ipv6Subnet via $nodeIPv6"
-sudo ip -6 route add $ipv6Subnet via $nodeIPv6
-fi
+    node=$1
+    ipv6Subnet=$2
+    nodeIPv6=$(kubectl get node $node -o json | jq -r '.status.addresses[] | select(.type=="InternalIP") | .address' | tail -n 1)
+    echo "adding route from $ipv6Subnet via $nodeIPv6"
+    sudo ip -6 route add $ipv6Subnet via $nodeIPv6
 }
 
 echo "Current routes:"
