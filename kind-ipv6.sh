@@ -99,7 +99,7 @@ cilium install \
     --helm-set=endpointHealthChecking.enabled=false \
     --helm-set=bpf.masquerade=true \
     --helm-set=ipMasqAgent.enabled=true \
-    --helm-set=nodePort.enabled=true"
+    --helm-set=nodePort.enabled=true \
     --helm-set=ipv6.enabled=true \
     --helm-set=ipv6NativeRoutingCIDR=fd00:10:244::/56 \
     --helm-set=extraArgs[1]="--local-router-ipv6=fe80::" \
