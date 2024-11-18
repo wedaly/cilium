@@ -6,6 +6,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/cilium/cilium/cilium-cli/connectivity/check"
@@ -35,7 +36,7 @@ func (s *podToCIDR) Run(ctx context.Context, t *check.Test) {
 	ct := t.Context()
 
 	for _, ip := range []string{ct.Params().ExternalIP, ct.Params().ExternalOtherIP} {
-		ep := check.HTTPEndpoint(fmt.Sprintf("external-%s", strings.ReplaceAll(ip, ".", "")), "https://"+ip)
+		ep := check.HTTPEndpoint(ipToName(ip), ipToURL(ip))
 
 		var i int
 		for _, src := range ct.ClientPods() {
@@ -50,4 +51,17 @@ func (s *podToCIDR) Run(ctx context.Context, t *check.Test) {
 			i++
 		}
 	}
+}
+
+func ipToName(ip string) string {
+	ipWithoutSep := strings.ReplaceAll(ip, ".", "") // IPv4 separator
+	ipWithoutSep = strings.ReplaceAll(ip, ":", "")  // IPv6 separator
+	return fmt.Sprintf("external-%s", ipWithoutSep)
+}
+
+func ipToURL(ipString string) string {
+	if ip := net.ParseIP(ipString); ip != nil && ip.To4() == nil {
+		ipString = fmt.Sprintf("[%s]", ipString) // Avoid parsing IPv6 last ":" as port
+	}
+	return "https://" + ipString
 }

@@ -412,6 +412,8 @@ func (t *Test) WithResources(spec string) *Test {
 			if errors.Is(err, io.EOF) {
 				break
 			}
+			// DEBUG
+			fmt.Printf("!!! widaly debug:\n%s\n!!!!!!\n", spec)
 			t.Fatalf("Parsing resource YAML: %s", err)
 		}
 

@@ -11,4 +11,4 @@ spec:
   - toCIDRSet:
     - cidr: "{{.ExternalCIDR}}"
       except:
-      - "{{ .ExternalOtherIP | ipToCIDR }}""
+      - "{{ .ExternalOtherIP | ipToCIDR }}"
