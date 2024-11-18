@@ -54,8 +54,8 @@ func (s *podToCIDR) Run(ctx context.Context, t *check.Test) {
 }
 
 func ipToName(ip string) string {
-	ipWithoutSep := strings.ReplaceAll(ip, ".", "") // IPv4 separator
-	ipWithoutSep = strings.ReplaceAll(ip, ":", "")  // IPv6 separator
+	ipWithoutSep := strings.ReplaceAll(ip, ".", "")          // IPv4 separator
+	ipWithoutSep = strings.ReplaceAll(ipWithoutSep, ":", "") // IPv6 separator
 	return fmt.Sprintf("external-%s", ipWithoutSep)
 }
 
