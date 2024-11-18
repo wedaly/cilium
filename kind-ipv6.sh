@@ -90,6 +90,36 @@ addPodCIDRRoutesToNode kind-worker2 "fd00:10:244:3::/64"
 echo "Updated routes:"
 ip -6 route
 
+echo "Patch coredns to use IPv6 upstream DNS:"
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        forward . [2606:4700:4700::1111]:53
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+EOF
+kubectl rollout restart -n kube-system deployments/coredns
+
 cilium install \
     --helm-set=ipam.mode=delegated-plugin \
     --helm-set=cni.customConf=true \
