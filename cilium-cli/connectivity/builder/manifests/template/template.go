@@ -6,6 +6,7 @@ package template
 import (
 	"bytes"
 	"html/template"
+	"net"
 	"strings"
 )
 
@@ -13,6 +14,16 @@ import (
 func Render(temp string, data any) (string, error) {
 	fns := template.FuncMap{
 		"trimSuffix": func(in, suffix string) string { return strings.TrimSuffix(in, suffix) },
+		"ipToCIDR": func(ipString string) string {
+			ip := net.ParseIP(ipString)
+			if ip == nil {
+				return ipString // Invalid IP address, return the original string unmodified.
+			} else if ip.To4() != nil {
+				return ipString + "/32"
+			} else { // ipv6
+				return ipString + "/128"
+			}
+		},
 	}
 
 	tm, err := template.New("template").Funcs(fns).Parse(temp)
